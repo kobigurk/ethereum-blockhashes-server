@@ -37,19 +37,11 @@ var blockhashes = web3.eth.contract([{
     "inputs": [{ "name": "x", "type": "bytes", "indexed": false }]
 }]);
 var blockhashesInstance = blockhashes.at('0x5e67df9864b113b59a39fd19840772f41366dc4e');
-var blockFilter = web3.eth.filter('latest');
-blockFilter.watch(function (error, result) {
-    if (error) {
-        console.log(error);
-        return;
-    }
-
-	var block = web3.eth.getBlock(result);
-	fillInBlanks(block.number, block.number - 1, 100)
-		.fail(function (err) {
-			console.log(err);
-		});
-});
+var block = web3.eth.getBlock(web3.eth.blockNumber);
+fillInBlanks(block.number, block.number - 1, block.number - 1)
+    .fail(function (err) {
+        console.log(err);
+    });
 
 function fillInBlanks(headBlock, blockNumber, blocksBack) {
 	var promise = Q();
