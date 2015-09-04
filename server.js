@@ -60,8 +60,7 @@ function fillInBlanks(headBlock, blockNumber, blocksBack) {
 				.then(function () {
 					var currentBlockNumber = blockNumber - local_i;
 					var existing = blockhashesInstance.get_blockhash_from_storage.call(currentBlockNumber);
-					console.log('debug existing: ' + existing);
-					if (existing == 0 && !filling[currentBlockNumber]) {
+					if (existing === 0 && !filling[currentBlockNumber]) {
 						filling[currentBlockNumber] = true;
 						console.log('filling: ' + currentBlockNumber);
 						if (headBlock - currentBlockNumber < 200) {
@@ -92,11 +91,11 @@ function fillInBlanks(headBlock, blockNumber, blocksBack) {
 									console.log('adding old: ' + currentBlockNumber + '\nrlp: ' + encoded);
 									try {
 										var txid = blockhashesInstance.add_old('0x' + encoded, currentBlockNumber, {from:'0x8266c4a0e9301661f19c936b7bd16c0dfa37c6e6', gas:200000});
+                                        console.log('tx: ' + txid);
 									} catch (e) {
 										delete filling[currentBlockNumber];
 										return deferred.reject(new Error(e));
 									}
-									console.log('tx: ' + txid);
 									delete filling[currentBlockNumber];
 									return deferred.resolve();
 								});
