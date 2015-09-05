@@ -36,8 +36,12 @@ var blockhashes = web3.eth.contract([{
     "type": "event",
     "inputs": [{ "name": "x", "type": "bytes", "indexed": false }]
 }]);
-var blockhashesInstance = blockhashes.at('0x5e67df9864b113b59a39fd19840772f41366dc4e');
+
+var gasPrice = (web3.eth.gasPrice).toString();
+console.log('gas price: ' + gasPrice);
+var blockhashesInstance = blockhashes.at('0xb278e4cb20dfbf97e78f27001f6b15288302f4d7');
 var blockFilter = web3.eth.filter('latest');
+var first = true;
 blockFilter.watch(function (error, result) {
     if (error) {
         console.log(error);
@@ -45,10 +49,14 @@ blockFilter.watch(function (error, result) {
     }
 
 	var block = web3.eth.getBlock(result);
-	fillInBlanks(block.number, block.number - 1, 100)
-		.fail(function (err) {
-			console.log(err);
-		});
+
+	if (block.number % 256 == 0 || first) {
+		first = false;
+		fillInBlanks(block.number, block.number - 1, 1)
+			.fail(function (err) {
+				console.log(err);
+			});
+	}
 });
 
 function fillInBlanks(headBlock, blockNumber, blocksBack) {
@@ -60,13 +68,13 @@ function fillInBlanks(headBlock, blockNumber, blocksBack) {
 				.then(function () {
 					var currentBlockNumber = blockNumber - local_i;
 					var existing = blockhashesInstance.get_blockhash_from_storage.call(currentBlockNumber);
-					if (existing === 0 && !filling[currentBlockNumber]) {
+					if (existing.toString() == '0' && !filling[currentBlockNumber]) {
 						filling[currentBlockNumber] = true;
 						console.log('filling: ' + currentBlockNumber);
-                        var deferred;
+						var deferred;
 						if (headBlock - currentBlockNumber < 200) {
 							deferred = Q.defer();
-							blockhashesInstance.add_recent(currentBlockNumber, {from:'0x8266c4a0e9301661f19c936b7bd16c0dfa37c6e6', gas:90000}, function (err, result) {
+							blockhashesInstance.add_recent(currentBlockNumber, {from:'0x8266c4a0e9301661f19c936b7bd16c0dfa37c6e6', gas:90000, gasPrice: gasPrice}, function (err, result) {
 								if (err) {
 									console.log(err);
 									delete filling[currentBlockNumber];
@@ -91,7 +99,7 @@ function fillInBlanks(headBlock, blockNumber, blocksBack) {
 									var encoded = eth_util.rlp.encode(block.header.raw).toString('hex');
 									console.log('adding old: ' + currentBlockNumber + '\nrlp: ' + encoded);
 									try {
-										var txid = blockhashesInstance.add_old('0x' + encoded, currentBlockNumber, {from:'0x8266c4a0e9301661f19c936b7bd16c0dfa37c6e6', gas:200000});
+										var txid = blockhashesInstance.add_old('0x' + encoded, currentBlockNumber, {from:'0x8266c4a0e9301661f19c936b7bd16c0dfa37c6e6', gas:200000, gasPrice: gasPrice});
                                         console.log('tx: ' + txid);
 									} catch (e) {
 										delete filling[currentBlockNumber];
